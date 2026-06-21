@@ -1,168 +1,161 @@
-# 🛡️ Wazuh SIEM Home Lab – End-to-End Security Monitoring
+# 🛡️ Wazuh SIEM Home Lab – Real-Time Security Monitoring
 
-A complete **SIEM Home Lab implementation using Wazuh**, demonstrating centralized security monitoring, log collection, file integrity monitoring (FIM), and cross-platform agent deployment on **Windows, Linux, and macOS** systems.
+A hands-on **SIEM home lab** built using **Wazuh v4.14.5**, demonstrating real-time endpoint monitoring, security event detection, CIS compliance checking, and MITRE ATT&CK mapping on a live Windows 11 endpoint.
 
-This project simulates a **real-world SOC environment** and showcases hands-on blue team skills such as endpoint monitoring, alert analysis, and SIEM configuration.
+> ⚡ This is not a theoretical project — this lab is actively running and detecting real security events.
 
 ---
 
-## 📌 Project Objectives
+## 📌 What This Lab Does
 
-- Install and configure **Wazuh Manager**
-- Deploy **Wazuh Agents** on:
-  - Windows
-  - Linux
-  - macOS
-- Monitor a **specific directory/path** using File Integrity Monitoring
-- Generate and analyze security alerts
-- Visualize events using the **Wazuh Dashboard**
+- Monitors a **live Windows 11 endpoint** in real time
+- Detects **484+ security events** including authentication events and system changes
+- Performs **CIS Microsoft Windows 11 Enterprise Benchmark v3.0.0** compliance checks
+- Maps alerts to the **MITRE ATT&CK framework** automatically
+- Runs **File Integrity Monitoring (FIM)** to detect unauthorized file changes
+- Provides a full **SOC-style dashboard** with alert timelines and severity levels
 
 ---
 
 ## 🧰 Tools & Technologies
 
-- **Wazuh SIEM**
-- Elastic Stack / OpenSearch
-- Ubuntu Server (Wazuh Manager)
-- Windows 10 / 11
-- Linux (Ubuntu / Kali)
-- macOS
-- VirtualBox / VMware
-- SSH, PowerShell, Terminal
+| Tool | Purpose |
+|------|---------|
+| Wazuh v4.14.5 | SIEM / XDR platform |
+| VirtualBox | Hosting the Wazuh server VM |
+| Ubuntu Server | Wazuh Manager OS |
+| Windows 11 Home | Monitored endpoint (agent) |
+| Wazuh Dashboard | Alert visualization & analysis |
+| PowerShell | Agent installation & management |
 
 ---
 
 ## 🏗️ Lab Architecture
 
-[ Windows Agent ] ─┐
-[ Linux Agent ] ─┼──▶ [ Wazuh Manager + Dashboard ]
-[ macOS Agent ] ─┘
-
+```
+┌─────────────────────┐         ┌──────────────────────────┐
+│  Windows 11 Laptop  │──1514──▶│   Wazuh Server (Ubuntu)  │
+│  LAPTOP-61MDGH93    │  TCP    │   192.168.1.11            │
+│  Agent ID: 001      │         │   Wazuh v4.14.5           │
+│  IP: 192.168.1.6    │         │   Dashboard on HTTPS      │
+└─────────────────────┘         └──────────────────────────┘
+```
 
 ---
 
-## 🚀 Wazuh Manager Installation (Ubuntu)
+## 🚀 Setup Steps
 
-```bash
-curl -sO https://packages.wazuh.com/4.7/wazuh-install.sh
-sudo bash wazuh-install.sh -a
-```
-After installation, access the dashboard:
-```bash
-https://<WAZUH_MANAGER_IP>
-```
-🖥️ Agent Installation & Configuration
-🔹 Linux Agent
-```bash
-curl -sO https://packages.wazuh.com/4.x/wazuh-agent.sh
+### 1. Deploy Wazuh Server
+- Downloaded the official Wazuh OVA (pre-built virtual machine)
+- Imported into VirtualBox and configured with 4GB RAM / 2 CPUs
+- Accessed the Wazuh Dashboard via browser at `https://192.168.1.11`
 
-sudo bash wazuh-agent.sh
-```
-Start agent service:
-```bash
-sudo systemctl enable wazuh-agent
+### 2. Deploy Windows Agent
+```powershell
+# Download and install the Wazuh agent silently
+Invoke-WebRequest -Uri https://packages.wazuh.com/4.x/windows/wazuh-agent-4.14.5-1.msi `
+  -OutFile $env:tmp\wazuh-agent
+msiexec.exe /i $env:tmp\wazuh-agent /q `
+  WAZUH_MANAGER='192.168.1.11' `
+  WAZUH_AGENT_GROUP='default' `
+  WAZUH_AGENT_NAME='my-windows-pc'
 
-sudo systemctl start wazuh-agent
-```
-🔹 Windows Agent
-Download Wazuh Agent for Windows
+# Register agent with the server
+& "C:\Program Files (x86)\ossec-agent\agent-auth.exe" -m 192.168.1.11
 
-Install and configure:
-
-Manager IP
-
-Agent Name
-
-Start the agent service:
-
-Services → Wazuh Agent → Start
-🔹 macOS Agent
-```bash
-curl -so wazuh-agent.pkg https://packages.wazuh.com/4.x/macos/wazuh-agent-4.x.pkg
-
-sudo installer -pkg wazuh-agent.pkg -target /
+# Start the agent service
+NET START WazuhSvc
 ```
-Start agent:
-```bash
-sudo /Library/Ossec/bin/wazuh-control start
+
+### 3. Verify Connection
+```powershell
+# Test network connectivity to Wazuh server
+Test-NetConnection -ComputerName 192.168.1.11 -Port 1514
+# Result: TcpTestSucceeded: True ✅
+
+# Check service status
+Get-Service WazuhSvc | Select-Object Status, Name
+# Result: Running ✅
 ```
-📂 File Integrity Monitoring (Monitoring a Specific Path)
-🔹 Linux Example (/var/www/html)
-Edit agent configuration:
-```bash
-sudo nano /var/ossec/etc/ossec.conf
-```
-```bash
-<syscheck>
-  <directories check_all="yes" realtime="yes">/var/www/html</directories>
-</syscheck>
-```
-Restart agent:
-```bash
-sudo systemctl restart wazuh-agent
-```
-🔹 Windows Example (C:\SensitiveData)
-```bash
+
+---
+
+## 📊 Real Results — What Wazuh Detected
+
+### Live Dashboard Stats
+- **484 security events** captured from the Windows endpoint
+- **Active agent:** LAPTOP-61MDGH93 (Windows 11 Home, v10.0.26200.8655)
+- **Agent version:** Wazuh v4.14.5
+- **MITRE ATT&CK techniques detected:** Valid Accounts (T1078)
+
+### CIS Benchmark Compliance Findings
+Wazuh automatically ran **CIS Microsoft Windows 11 Enterprise Benchmark v3.0.0** checks and flagged real misconfigurations:
+
+| Rule ID | Finding | Severity |
+|---------|---------|----------|
+| 19005 | SCA Summary: Score less than 30% | Level 9 |
+| 19007 | Preview builds and feature updates policy not configured | Level 7 |
+| 19008 | Optional updates not disabled | Level 3 |
+| 19009 | Quality update receive time not configured | Level 3 |
+
+> A score below 30% means the endpoint has significant security hardening gaps — exactly the kind of finding a SOC analyst investigates.
+
+---
+
+## 🔍 Alert Analysis
+
+### Authentication Event Detection
+- Wazuh detected and categorized **authentication success** events
+- Mapped to **MITRE ATT&CK: Valid Accounts (T1078)**
+- Alert timeline shows spike in events during agent connection
+
+### File Integrity Monitoring
+Configured to monitor Windows system directories for unauthorized changes:
+```xml
 <syscheck>
   <directories check_all="yes" realtime="yes">C:\SensitiveData</directories>
+  <directories check_all="yes" realtime="yes">C:\Windows\System32</directories>
 </syscheck>
 ```
-🔹 macOS Example (/Users/emmanuel/Documents)
-```bash
-<syscheck>
-  <directories check_all="yes" realtime="yes">/Users/emmanuel/Documents</directories>
-</syscheck>
+
+---
+
+## 🧠 Skills Demonstrated
+
+- SIEM deployment and configuration (Wazuh)
+- Windows endpoint agent installation and registration
+- Security event analysis and alert triage
+- CIS Benchmark compliance assessment
+- MITRE ATT&CK framework mapping
+- Network troubleshooting (port testing, config debugging)
+- Blue Team / SOC analyst workflows
+
+---
+
+## 🚀 Planned Enhancements
+
+- [ ] Add Linux agent (Kali VM) for cross-platform monitoring
+- [ ] Write custom Wazuh detection rules
+- [ ] Simulate brute force attack and capture alerts
+- [ ] Configure active response to auto-block IPs
+- [ ] Integrate with Atomic Red Team for attack simulation
+- [ ] Add Shuffle SOAR for automated incident response
+
+---
+
+## 📁 Project Structure
+
 ```
-🔔 Alert Testing
-Trigger alerts by creating or modifying files:
-
-touch testfile.txt
-echo "unauthorized change" >> testfile.txt
-Alerts generated:
-
-File creation
-
-File modification
-
-File deletion
-
-All alerts are visible in the Wazuh Dashboard.
-
-📊 Use Cases Demonstrated
-File integrity monitoring
-
-Unauthorized change detection
-
-Endpoint visibility
-
-Log correlation
-
-Compliance monitoring (CIS, PCI DSS)
-
-SOC alert analysis
-
-📁 Project Structure
 wazuh-siem-homelab/
-└── README.md
-🧠 Skills Demonstrated
-SIEM deployment & configuration
+├── README.md          ← This file
+├── screenshots/       ← Dashboard & alert screenshots (coming soon)
+└── rules/             ← Custom detection rules (coming soon)
+```
 
-Blue Team / SOC operations
+---
 
-Endpoint security monitoring
+## 👤 Author
 
-Log analysis & alert investigation
-
-Cross-platform security integration
-
-🚀 Future Enhancements
-Custom Wazuh detection rules
-
-Active response automation
-
-Malware detection integration
-
-Log ingestion from web servers
-
-Attack simulation (Atomic Red Team)
-
+**Emmanuel Senaij**  
+Cybersecurity Analyst | CEHv13 Certified | TryHackMe Top 6%  
+🔗 [GitHub](https://github.com/fLsh123) • [LinkedIn](https://linkedin.com/in/your-linkedin)
