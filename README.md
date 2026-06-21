@@ -37,7 +37,7 @@ A hands-on **SIEM home lab** built using **Wazuh v4.14.5**, demonstrating real-t
 │  Windows 11 Laptop  │──1514──▶│   Wazuh Server (Ubuntu)  │
 │  LAPTOP-61MDGHxx    │  TCP    │   192.168.x.xx            │
 │  Agent ID: 001      │         │   Wazuh v4.14.5           │
-│  IP: 192.168.1.6    │         │   Dashboard on HTTPS      │
+│  IP: 192.168.x.x    │         │   Dashboard on HTTPS      │
 └─────────────────────┘         └──────────────────────────┘
 ```
 
