@@ -35,7 +35,7 @@ A hands-on **SIEM home lab** built using **Wazuh v4.14.5**, demonstrating real-t
 ```
 ┌─────────────────────┐         ┌──────────────────────────┐
 │  Windows 11 Laptop  │──1514──▶│   Wazuh Server (Ubuntu)  │
-│  LAPTOP-61MDGH93    │  TCP    │   192.168.1.11            │
+│  LAPTOP-61MDGHxx    │  TCP    │   192.168.x.xx            │
 │  Agent ID: 001      │         │   Wazuh v4.14.5           │
 │  IP: 192.168.1.6    │         │   Dashboard on HTTPS      │
 └─────────────────────┘         └──────────────────────────┘
@@ -48,7 +48,7 @@ A hands-on **SIEM home lab** built using **Wazuh v4.14.5**, demonstrating real-t
 ### 1. Deploy Wazuh Server
 - Downloaded the official Wazuh OVA (pre-built virtual machine)
 - Imported into VirtualBox and configured with 4GB RAM / 2 CPUs
-- Accessed the Wazuh Dashboard via browser at `https://192.168.1.11`
+- Accessed the Wazuh Dashboard via browser at `https://<manger_ip>`
 
 ### 2. Deploy Windows Agent
 ```powershell
@@ -56,12 +56,12 @@ A hands-on **SIEM home lab** built using **Wazuh v4.14.5**, demonstrating real-t
 Invoke-WebRequest -Uri https://packages.wazuh.com/4.x/windows/wazuh-agent-4.14.5-1.msi `
   -OutFile $env:tmp\wazuh-agent
 msiexec.exe /i $env:tmp\wazuh-agent /q `
-  WAZUH_MANAGER='192.168.1.11' `
+  WAZUH_MANAGER='<manger_ip>' `
   WAZUH_AGENT_GROUP='default' `
   WAZUH_AGENT_NAME='my-windows-pc'
 
 # Register agent with the server
-& "C:\Program Files (x86)\ossec-agent\agent-auth.exe" -m 192.168.1.11
+& "C:\Program Files (x86)\ossec-agent\agent-auth.exe" -m <manger_ip>
 
 # Start the agent service
 NET START WazuhSvc
@@ -70,7 +70,7 @@ NET START WazuhSvc
 ### 3. Verify Connection
 ```powershell
 # Test network connectivity to Wazuh server
-Test-NetConnection -ComputerName 192.168.1.11 -Port 1514
+Test-NetConnection -ComputerName <manger_ip> -Port 1514
 # Result: TcpTestSucceeded: True ✅
 
 # Check service status
@@ -84,8 +84,8 @@ Get-Service WazuhSvc | Select-Object Status, Name
 
 ### Live Dashboard Stats
 - **484 security events** captured from the Windows endpoint
-- **Active agent:** LAPTOP-61MDGH93 (Windows 11 Home, v10.0.26200.8655)
-- **Agent version:** Wazuh v4.14.5
+- **Active agent:** LAPTOP-61MDxx (Windows 11 Home)
+- **Agent version:** Wazuh v4
 - **MITRE ATT&CK techniques detected:** Valid Accounts (T1078)
 
 ### CIS Benchmark Compliance Findings
